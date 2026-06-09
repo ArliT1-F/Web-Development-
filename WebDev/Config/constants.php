@@ -21,16 +21,16 @@ define('SITE_EMAIL', 'info@webplatform.com');
 // PATHS - RRUGËT E DOSJEVE
 // ============================================
 define('ROOT_PATH', dirname(__DIR__));
-define('CONFIG_PATH', ROOT_PATH . '/config');
+define('CONFIG_PATH', ROOT_PATH . '/Config');
 define('INCLUDES_PATH', ROOT_PATH . '/includes');
 define('PUBLIC_PATH', ROOT_PATH . '/public');
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 define('LOGS_PATH', ROOT_PATH . '/logs');
 
 // URL paths
-define('CSS_URL', SITE_URL . '/public/css');
-define('JS_URL', SITE_URL . '/public/js');
-define('IMAGES_URL', SITE_URL . '/public/images');
+define('CSS_URL', SITE_URL . '/assets/css');
+define('JS_URL', SITE_URL . '/assets/js');
+define('IMAGES_URL', SITE_URL . '/assets/images');
 
 // ============================================
 // KONFIGURIME PËR SESIONE

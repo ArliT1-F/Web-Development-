@@ -5,6 +5,9 @@
  * Faqja kryesore e platformës.
  */
 
+// Nis aplikacionin - ngarko konfigurimet dhe klasat
+require_once __DIR__ . '/includes/init.php';
+
 $pageTitle = SITE_NAME . ' - Platformë Web E-Commerce';
 require_once __DIR__ . '/views/partials/header.php';
 

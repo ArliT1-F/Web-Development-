@@ -1,88 +1,70 @@
 version: '3.8'
 
 services:
-  # ============================================
-  # WEB SERVER - PHP + Apache
-  # ============================================
-  web:
+  # Database Service
+  db:
+    image: mysql:8.0
+    container_name: webdev_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-web_platform}
+      MYSQL_USER: ${MYSQL_USER:-webdev}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-webdevpass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - webdev_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # PHP Application
+  app:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: webdev_apache
+      context: ..
+      dockerfile: WebDev/Dockerfile
+    container_name: webdev_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE:-web_platform}
+      DB_USER: ${MYSQL_USER:-webdev}
+      DB_PASS: ${MYSQL_PASSWORD:-webdevpass}
+      SITE_URL: ${SITE_URL:-http://localhost:8080}
     ports:
       - "8080:80"
     volumes:
-      - .:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      - DB_HOST=db
-      - DB_NAME=${DB_NAME:-web_platform}
-      - DB_USER=${DB_USER:-webuser}
-      - DB_PASS=${DB_PASS:-webpass123}
+      - ..:/var/www/html
     networks:
       - webdev_network
-    restart: unless-stopped
 
-  # ============================================
-  # DATABASE - MySQL 8.0
-  # ============================================
-  db:
-    image: mysql:8.0
-    container_name: webdev_mysql
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass123}
-      MYSQL_DATABASE: ${DB_NAME:-web_platform}
-      MYSQL_USER: ${DB_USER:-webuser}
-      MYSQL_PASSWORD: ${DB_PASS:-webpass123}
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpass123}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - webdev_network
-    restart: unless-stopped
-
-  # ============================================
-  # PHPMYADMIN - Database Management UI
-  # ============================================
+  # phpMyAdmin (Optional)
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: webdev_phpmyadmin
-    ports:
-      - "8081:80"
+    restart: unless-stopped
+    depends_on:
+      - db
     environment:
       PMA_HOST: db
-      PMA_USER: ${DB_USER:-webuser}
-      PMA_PASSWORD: ${DB_PASS:-webpass123}
-      UPLOAD_LIMIT: 50M
-    depends_on:
-      db:
-        condition: service_healthy
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "8081:80"
     networks:
       - webdev_network
-    restart: unless-stopped
 
-# ============================================
-# NETWORKS
-# ============================================
 networks:
   webdev_network:
     driver: bridge
 
-# ============================================
-# VOLUMES - Persistent Data
-# ============================================
 volumes:
-  mysql_data:
-    driver: local
+  db_data:
